@@ -354,7 +354,7 @@ cost_warning: >
   对 L0 任务调用本工具是禁止的（应在 S0 阶段跳过）。
 
 side_effects: >
-  可能加载 references/{templates,stem-eng-sub-template,failure-patterns}.md
+  可能加载 references/templates/{L1,L2,L3,stem}.md + references/stem-eng-sub-template.md + references/failure-patterns.md
 stateless: false
 
 calling_example: |

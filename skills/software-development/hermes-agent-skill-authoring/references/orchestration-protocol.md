@@ -335,13 +335,17 @@ formalize 置信度低 → 必填 next_action_to_reduce_uncertainty
 
 ### 建议采集指标
 
-| 指标 | 类型 | 维度 |
-|------|------|------|
-| `skill.invocation_count` | counter | skill, version |
-| `skill.latency_ms` | histogram | skill, percentile |
-| `skill.success_rate` | gauge | skill |
-| `handoff.count` | counter | from_skill, to_skill |
-| `classifier.misclassification_feedback` | gauge | feedback_source |
-| `formalize.spec_acceptance_rate` | gauge | — |
-| `pipeline.step_latency_ms` | histogram | pipeline, step |
-| `error.recovery_rate` | gauge | error_code |
+| 指标 | 类型 | 维度 | 告警阈值 | 处置 |
+|------|------|------|---------|------|
+| `skill.invocation_count` | counter | skill, version | — | — |
+| `skill.latency_ms` | histogram | skill, percentile | P99 > 基线×2 | 降级到默认路由 |
+| `skill.success_rate` | gauge | skill | < 95% 持续 30min | 切回旧版本 |
+| `handoff.count` | counter | from_skill, to_skill | — | — |
+| `classifier.latency_p99_ms` | histogram | — | > 300ms 持续 10min | 降级到默认路由 |
+| `classifier.confidence_avg` | gauge | — | < 0.65 持续 30min | 切回 v3.1 全量 |
+| `classifier.misclassification_rate` | gauge | feedback_source | > 8% | 暂停灰度扩容 |
+| `formalize.spec_acceptance_rate` | gauge | — | < 70% | 触发回归审计 |
+| `handoff.schema_validation_failures` | counter | — | > 0 | 立即告警 |
+| `orchestrator.fallback_count` | counter | — | 30min 内异常激增 | 自动降级 |
+| `pipeline.step_latency_ms` | histogram | pipeline, step | — | — |
+| `error.recovery_rate` | gauge | error_code | < 80% | 排查降级链 |

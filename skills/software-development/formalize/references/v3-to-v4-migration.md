@@ -119,3 +119,36 @@ A: 不会。`full_formalize` 管道输出与 v3.1 完全一致。未适配的技
 
 **Q: 怎么判断该用哪个工具？**
 A: 先查 `references/tool-contracts.md` 了解每个工具的能力，或直接使用预构建管道（quick_check / assumption_audit / full_formalize）。
+
+---
+
+## 七、灰度发布策略
+
+### 发布节奏
+
+```
+Week 1: 内部 dogfood，仅团队成员触发 classifier + v4.0 链路
+Week 2: 10% 流量走新链路，监控 misclassification_rate + latency_p99
+Week 3: 50% 流量，观察 P99 延迟 + formalize spec_acceptance_rate
+Week 4: 100% 流量，但保留 1 周回退开关
+Week 5+: 移除 v3.1 旧链路（前提：所有指标达标 ≥ 连续 7 天）
+```
+
+### 回退条件
+
+任一触发即暂停灰度扩容并切回 v3.1：
+
+| 条件 | 阈值 | 处置 |
+|------|------|------|
+| classifier P99 延迟 | > 300ms 持续 10min | 降级到默认路由 |
+| classifier 置信度均值 | < 0.65 持续 30min | 切回 v3.1 全量 |
+| misclassification_rate | > 8% | 暂停扩容，排查规则 |
+| formalize spec_acceptance_rate | < 70% | 触发回归审计 |
+| handoff schema_validation_failures | > 0 | 立即告警 + 回退 |
+
+### 回滚方法
+
+1. 将 classifier `mode` 从 `always_on` 改为 `on_demand`（关闭自动路由）
+2. 将 formalize `mode` 从 `toolkit` 改回默认（等价 v3.1 full_formalize）
+3. 单 commit revert 即可恢复
+

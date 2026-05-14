@@ -23,8 +23,13 @@ reference_loading_policy:
   on_match_failure_pattern: references/failure-patterns.md
   on_stem_engineering: references/stem-eng-sub-template.md
   on_contradiction_suspected: references/contradiction-heuristics.md
-  on_validate: references/skeleton-card.md
+  on_validate_rules: references/skeleton-card.md
+  on_validate_rubric: references/confidence-rubric.md
   on_tool_contract: references/tool-contracts.md
+  on_template_L1: references/templates/L1.md
+  on_template_L2: references/templates/L2.md
+  on_template_L3: references/templates/L3.md
+  on_template_stem: references/templates/stem.md
 output_mode: hybrid
 exposed_tools:
   - name: detect_contradiction
