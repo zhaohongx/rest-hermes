@@ -18,6 +18,7 @@ from typing import Optional
 from agent.skill_utils import (
     extract_skill_conditions,
     extract_skill_description,
+    extract_skill_orchestration_metadata,
     get_all_skills_dirs,
     get_disabled_skill_names,
     iter_skill_index_files,
@@ -901,6 +902,36 @@ def _write_skills_snapshot(
         logger.debug("Could not write skills prompt snapshot: %s", e)
 
 
+def _annotate_skill_description(desc: str, orch: dict | None) -> str:
+    """Append orchestration role tags to a skill description for the index.
+
+    Keeps descriptions concise while surfacing routing/scheduling hints
+    so the LLM can triage more effectively before loading full SKILL.md.
+    """
+    if not orch:
+        return desc
+    tags: list[str] = []
+    mode = orch.get("mode", "")
+    priority = orch.get("priority", "")
+    if mode == "always_on" or priority == "P-1":
+        tags.append("always-on")
+    elif mode == "toolkit":
+        tools = orch.get("exposed_tools", [])
+        pipelines = orch.get("pipelines", [])
+        parts = [f"toolkit ({len(tools)} tools)"]
+        if pipelines:
+            parts.append(f"{len(pipelines)} pipelines")
+        tags.append(", ".join(parts))
+    elif mode == "on_demand":
+        tags.append("on-demand")
+    if orch.get("deprecation"):
+        tags.append("deprecated")
+    if not tags:
+        return desc
+    tag_str = "; ".join(tags)
+    return f"{desc} [{tag_str}]"
+
+
 def _build_snapshot_entry(
     skill_file: Path,
     skills_dir: Path,
@@ -928,6 +959,7 @@ def _build_snapshot_entry(
         "description": description,
         "platforms": [str(p).strip() for p in platforms if str(p).strip()],
         "conditions": extract_skill_conditions(frontmatter),
+        "orchestration": extract_skill_orchestration_metadata(frontmatter),
     }
 
 
@@ -1058,8 +1090,11 @@ def build_skills_system_prompt(
                 available_toolsets,
             ):
                 continue
+            desc = entry.get("description", "")
+            orch = entry.get("orchestration") or {}
+            desc = _annotate_skill_description(desc, orch)
             skills_by_category.setdefault(category, []).append(
-                (frontmatter_name, entry.get("description", ""))
+                (frontmatter_name, desc)
             )
         category_descriptions = {
             str(k): str(v)
@@ -1083,8 +1118,11 @@ def build_skills_system_prompt(
                 available_toolsets,
             ):
                 continue
+            desc = entry["description"]
+            orch = entry.get("orchestration") or {}
+            desc = _annotate_skill_description(desc, orch)
             skills_by_category.setdefault(entry["category"], []).append(
-                (entry["frontmatter_name"], entry["description"])
+                (entry["frontmatter_name"], desc)
             )
 
         # Read category-level DESCRIPTION.md files
@@ -1139,8 +1177,11 @@ def build_skills_system_prompt(
                 ):
                     continue
                 seen_skill_names.add(frontmatter_name)
+                desc = entry["description"]
+                orch = entry.get("orchestration") or {}
+                desc = _annotate_skill_description(desc, orch)
                 skills_by_category.setdefault(entry["category"], []).append(
-                    (frontmatter_name, entry["description"])
+                    (frontmatter_name, desc)
                 )
             except Exception as e:
                 logger.debug("Error reading external skill %s: %s", skill_file, e)

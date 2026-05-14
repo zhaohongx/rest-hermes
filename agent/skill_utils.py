@@ -304,6 +304,43 @@ def extract_skill_conditions(frontmatter: Dict[str, Any]) -> Dict[str, List]:
 # ── Skill config extraction ───────────────────────────────────────────────
 
 
+def extract_skill_orchestration_metadata(frontmatter: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract orchestration-related fields from parsed frontmatter.
+
+    Reads the v4.0+ fields that enable cross-skill collaboration: mode,
+    priority, exposed_tools, pipelines, output_mode, and deprecation.
+    Returns an empty dict for skills that don't declare any of these.
+    """
+    result: Dict[str, Any] = {}
+    for field in (
+        "mode", "priority", "output_mode", "output_visibility",
+        "latency_budget_ms", "token_budget", "cost_tier",
+    ):
+        if field in frontmatter:
+            result[field] = frontmatter[field]
+    if "exposed_tools" in frontmatter:
+        tools = frontmatter["exposed_tools"]
+        if isinstance(tools, list):
+            result["exposed_tools"] = [
+                t["name"] if isinstance(t, dict) else str(t) for t in tools
+            ]
+    if "pipelines" in frontmatter:
+        pipelines = frontmatter["pipelines"]
+        if isinstance(pipelines, dict):
+            result["pipelines"] = list(pipelines.keys())
+    if "deprecation_notice" in frontmatter:
+        dn = frontmatter["deprecation_notice"]
+        if isinstance(dn, dict):
+            result["deprecation"] = dn.get("status", "deprecated") if "status" in dn else "deprecated"
+    if "not_when" in frontmatter:
+        nw = frontmatter["not_when"]
+        if isinstance(nw, list):
+            result["not_when_count"] = len(nw)
+    if "reference_loading_policy" in frontmatter:
+        result["has_reference_policy"] = True
+    return result
+
+
 def extract_skill_config_vars(frontmatter: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Extract config variable declarations from parsed frontmatter.
 
