@@ -163,3 +163,36 @@ Pick the closest existing category. Don't invent new top-level categories casual
 - [ ] Structure: `# Title` → `## Overview` → `## When to Use` → body → `## Common Pitfalls` → `## Verification Checklist`
 - [ ] `related_skills` references resolve in-repo (or are explicitly OK to be user-local)
 - [ ] `git add skills/<category>/<name>/ && git commit` completed on the intended branch
+
+---
+
+## Cross-Skill Orchestration Protocol
+
+For skills that need to collaborate (call each other, share context, validate outputs), see the protocol reference at `references/orchestration-protocol.md`. Key concepts:
+
+### Quick Reference
+
+| Concept | Where Defined | Brief |
+|---------|--------------|-------|
+| Handoff schema | `orchestration-protocol.md §2` | JSON format for skill-to-skill context passing |
+| `[INTENT-CLASSIFIED]` marker | `orchestration-protocol.md §3` | Lightweight tag injected by intent-classifier |
+| `exposed_tools` | `orchestration-protocol.md §4` | How toolkit skills declare callable capabilities |
+| Output modes | `orchestration-protocol.md §5` | visible / hidden / hybrid decision tree |
+| Frontmatter fields | `orchestration-protocol.md §6` | `mode`, `priority`, `exposed_tools`, `pipelines`, `deprecation` |
+| Version compatibility | `orchestration-protocol.md §7` | Deprecation flow and version negotiation |
+| Error protocol | `orchestration-protocol.md §8` | Standard error codes and severity levels |
+
+### When to Add Orchestration Fields
+
+| Your Skill Type | Fields to Add |
+|----------------|---------------|
+| Always-on pre-processor | `mode: always_on`, `priority: P-1`, `output_mode: hidden` |
+| On-demand skill | `mode: on_demand`, `trigger`, `not_when` |
+| Toolkit (callable by others) | `mode: toolkit`, `exposed_tools`, `pipelines` |
+| Deprecated skill | `deprecation: { status, supported_until, migration_guide }` |
+
+### Related Skills
+
+For examples of skills that implement the orchestration protocol:
+- `intent-classifier` — P-1 always-on router with JSON output + marker injection
+- `formalize` — v4.0 toolkit with 8 exposed_tools + 3 pipelines + deprecation notice
