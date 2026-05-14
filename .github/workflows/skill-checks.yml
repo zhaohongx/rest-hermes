@@ -1,0 +1,19 @@
+name: Skill Checks
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml jsonschema
+      - name: Check frontmatter schema
+        run: python ci/check-frontmatter.py
+      - name: Check status references
+        run: python ci/check-status-references.py
+      - name: Check glossary
+        run: python ci/check-glossary.py
