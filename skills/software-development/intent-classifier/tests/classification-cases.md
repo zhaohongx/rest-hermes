@@ -256,3 +256,70 @@ C120: "能快一点吗"                  → optimize/ambiguous (没说具体对
 - 边界（15 条）：准确率 ≥ 75%（允许模糊边界 low conf）
 - 鲁棒性（10 条）：不崩溃（允许 UNKNOWN）
 - 整体：≥ 90%
+
+---
+
+## 七、补充边界与鲁棒（+40 条，总计 160 条）
+
+### Group A 补足（+5 条）
+```
+C121: "hello world"                   → chitchat/simple_qa (ambiguous greeting vs code)
+C122: "谢谢，太棒了"                  → chitchat (gratitude)
+C123: "能帮我个忙吗"                  → ambiguous_requirement (unspecified request)
+C124: "Python 的语言特性有哪些"        → simple_qa (knowledge qa, not code)
+C125: "把readme翻成中文"              → translation
+```
+
+### Group B 补足（+5 条）
+```
+C126: "rm -rf /tmp/cache"             → shell_command
+C127: "把 config 里的 api_key 换成从环境变量读取" → atomic_edit
+C128: "mkdir -p src/components"       → shell_command
+C129: "删除所有 .pyc 文件"            → shell_command / file_operation
+C130: "追加一行 import os 到 main.py 头部" → atomic_edit
+```
+
+### Group C 补足（+5 条）
+```
+C131: "帮我看看这段 SQL 有没有注入风险" → code_review (security review)
+C132: "设计一个 REST API 的错误码规范" → code_design
+C133: "这个接口为什么偶尔返回 502"     → debug (intermittent error)
+C134: "设计一个支持水平扩展的用户服务"  → system_design (with scalability)
+C135: "怎么重构这个 2000 行的函数"     → code_design (refactoring)
+```
+
+### Group D 补足（+5 条）
+```
+C136: "做一个类似抖音的App"           → ambiguous_requirement (highly vague)
+C137: "需要实时 + 批量 + 高可用的数据处理" → contradictory_constraints (conflicting requirements)
+C138: "设计全国银行核心交易系统"       → high_complexity (national scale)
+C139: "做一个融合区块链+AI的供应链平台" → cross_domain (blockchain + AI + supply chain)
+C140: "帮个忙"                        → ambiguous_requirement (maximally vague)
+```
+
+### 边界加强（+10 → 共 25 条）
+```
+C141: "帮我看看代码"                  → ambiguous (code_review? debug? 未指定)
+C142: "这个怎么用"                    → ambiguous_requirement (unclear subject)
+C143: "跟我上次说的那样做"            → confirmation/chitchat (context-dependent)
+C144: "前端 React 后端 Go 数据库 PostgreSQL 缓存 Redis 消息队列 Kafka" → high_complexity (tech stack enumeration)
+C145: "写 写 写"                      → UNKNOWN (nonsensical repetition)
+C146: "🐛🐛🐛"                         → UNKNOWN/chitchat (emoji-only)
+C147: "I need help with my code"     → ambiguous_requirement (language detection needed)
+C148: "帮我写一个函数"                → ambiguous_requirement (missing what function)
+C149: "README 写一下"                 → atomic_edit/documentation (context needed)
+C150: "这个需求和 PM 确认过了没"      → chitchat/confirmation (meta-discussion)
+```
+
+### 鲁棒加强（+10 → 共 20 条）
+```
+C151: ""                             → UNKNOWN (empty input)
+C152: "   "                          → UNKNOWN (whitespace only)
+C153: "\n\t\n"                       → UNKNOWN (whitespace characters)
+C154: "bug: 用户登录后白屏 #12345"    → debug (issue report format)
+C155: "帮我写个脚本监控 CPU 超过 90% 就发钉钉告警" → code_design/shell_command (hybrid)
+C156: "https://github.com/user/repo/issues/1 这个问题" → debug (URL + context)
+C157: "需求文档在 confluence 第 3 页" → chitchat/info (reference sharing, not a request)
+C158: "!!!! SOS !!!!"                → UNKNOWN (emergency signal, no content)
+C159: "第一：改登录页 第二：加验证码 第三：改密码逻辑 第四：写测试 第五：部署" → high_complexity (5 tasks enumerated)
+C160: "推荐 搜索 登录 导入 导出 聊天 支付 地图" → high_complexity (8 feature keywords, multiple failure patterns)
