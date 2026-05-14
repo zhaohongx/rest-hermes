@@ -1,6 +1,8 @@
 ---
 name: intent-classifier
 version: 1.0.0
+status: beta
+enabled_by_default: false
 description: "Use when user input arrives. Lightweight pre-router: classify intent into 17 categories across 4 groups, decide whether to formalize, route to downstream skill. Rule-first O(1) matching with LLM fallback. Outputs JSON RouteDecision."
 author: Hermes Agent
 license: MIT
@@ -16,13 +18,30 @@ latency_budget_ms: 200
 fallback_strategy:
   on_timeout: return_unknown
   on_low_confidence: pass_through_with_signal
+fallback_skill: formalize
 llm_fallback:
   enabled: true
   model_tier: lightweight
   max_fallback_ratio: 0.30
+beta:
+  start_date: 2026-05-16
+  evaluation_date: 2026-05-30
+  hard_deadline: 2026-06-15
+  promote_criteria:
+    - misclassification_rate < 0.08
+    - dogfood_satisfaction >= 4.0
+    - p0_incidents == 0
+    - error_code_ec001_cumulative <= 5
+    - error_code_ec002_cumulative <= 5
+  rollback_trigger:
+    - any_p0_incident
+    - misclassification_rate > 0.15
+  activation:
+    input_prefix: ["#beta", "[experimental]"]
+    whitelist: dogfood_team
 metadata:
   hermes:
-    tags: [routing, classification, intent, pre-processing, always-on]
+    tags: [routing, classification, intent, pre-processing, always-on, beta]
     related_skills: [formalize]
 ---
 

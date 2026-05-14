@@ -1,7 +1,14 @@
 ---
 name: formalize
 version: 4.0.0
+status: active
+enabled_by_default: true
 description: 自然语言需求 → 可执行规格书，融合自检循环 + 渐进式模板 + 失败模式库。v4.0 支持 toolkit 模式按需调用。
+deprecation:
+  status: stable
+  next_major: 4.0.0
+  next_major_status: beta
+  v3_1_compat: "full_formalize pipeline (output-equivalent, no migration needed)"
 trigger:
   - 用户表达需求/意图但描述模糊、跳跃、含矛盾或隐含假设
   - 涉及数学/物理/算法建模
