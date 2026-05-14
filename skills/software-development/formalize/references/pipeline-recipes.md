@@ -1,6 +1,8 @@
 # formalize v4.0 管道配方（Pipeline Recipes）
 
-> **定位**：常见跨技能协作场景的调用菜谱。每个配方包含场景描述、调用步骤、预期产出。
+> **@status: preview, not-yet-active**
+> **定位**：常见跨技能协作场景的调用菜谱。
+> **当前状态**：Recipe 2-8 依赖 v4.0 toolkit 工具，P1/P2 阶段不可用。Recipe 1 (quick_check) + Recipe 3 (full_formalize) 为 P3 首发管道。
 
 ---
 

@@ -1,6 +1,8 @@
 # formalize v4.0 — 工具契约（Tool Contracts）
 
-> **定位**：本文档定义 formalize toolkit 所有原子工具的输入/输出 schema，作为 inter-skill 调用的**唯一契约锚点**。所有调用方必须遵守此契约，不可直接依赖实现细节。
+> **@status: preview, not-yet-active**
+> **定位**：本文档定义 formalize toolkit 所有原子工具的输入/输出 schema，作为 inter-skill 调用的**唯一契约锚点**。
+> **当前状态**：v4.0 toolkit 模式尚未全量启用（P3 阶段），本文件为契约预览。P1/P2 阶段仅 `full_formalize` 管道可用。
 
 ---
 

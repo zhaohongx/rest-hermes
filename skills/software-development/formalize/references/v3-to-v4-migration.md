@@ -124,31 +124,69 @@ A: 先查 `references/tool-contracts.md` 了解每个工具的能力，或直接
 
 ## 七、灰度发布策略
 
-### 发布节奏
+### 切分维度
 
-```
-Week 1: 内部 dogfood，仅团队成员触发 classifier + v4.0 链路
-Week 2: 10% 流量走新链路，监控 misclassification_rate + latency_p99
-Week 3: 50% 流量，观察 P99 延迟 + formalize spec_acceptance_rate
-Week 4: 100% 流量，但保留 1 周回退开关
-Week 5+: 移除 v3.1 旧链路（前提：所有指标达标 ≥ 连续 7 天）
-```
+- **流量切分**：按 `user_id hash mod 100` 分桶
+- **灰度桶范围**：W2=[0,10), W3=[0,50), W4=[0,100)
+- **内部白名单**：W1 团队账户不受 hash 影响，始终走新链路
 
-### 回退条件
+### 阶段表
 
-任一触发即暂停灰度扩容并切回 v3.1：
+| 周次 | 流量比例 | 切分维度 | 监控重点 | 回退触发条件 | 回退动作 |
+|------|---------|---------|---------|------------|---------|
+| W1 | 内部 dogfood | 团队白名单 | 全部 6 指标 | 任一 P0 错误 | 立即回 v3.1 |
+| W2 | 10% | user_id hash | latency_p99 + misclassification_rate | P99 > 300ms 或误分类 > 8% | 24h 内回退 |
+| W3 | 50% | user_id hash | spec_acceptance_rate | < 70% 持续 2h | 灰度暂停 |
+| W4 | 100% | 全量 | 全部 6 指标 | 任一指标连续 2h 超阈值 | 切回 W3 状态 |
+| W5-7 | 100% + 旧链路保留 | — | 持续观察 | — | — |
+| W8 | 移除 v3.1 旧链路 | — | — | — | — |
 
-| 条件 | 阈值 | 处置 |
-|------|------|------|
-| classifier P99 延迟 | > 300ms 持续 10min | 降级到默认路由 |
-| classifier 置信度均值 | < 0.65 持续 30min | 切回 v3.1 全量 |
-| misclassification_rate | > 8% | 暂停扩容，排查规则 |
-| formalize spec_acceptance_rate | < 70% | 触发回归审计 |
-| handoff schema_validation_failures | > 0 | 立即告警 + 回退 |
+### 等价性验证
 
-### 回滚方法
+灰度期间（W2-W4），对灰度流量同时调用 v3.1 与 v4.0（影子模式），对比关键字段：
 
-1. 将 classifier `mode` 从 `always_on` 改为 `on_demand`（关闭自动路由）
-2. 将 formalize `mode` 从 `toolkit` 改回默认（等价 v3.1 full_formalize）
-3. 单 commit revert 即可恢复
+| 对比字段 | 允许差异 | 超限处置 |
+|---------|---------|---------|
+| 章节数 | ≤ 1 | >1 触发审计 |
+| ⚠️ 数量 | ≤ 2 | >2 触发审计 |
+| 置信度等级 | 完全相同 | 不同触发审计 |
+
+差异 > 5% 的用例 → 自动采样 20 条 → 人工复盘。
+
+### 回退操作手册
+
+1. **触发条件命中** → 值班人员收到告警（PagerDuty / 企微群通知）
+2. **执行回退**：
+   ```bash
+   # 方案 A：配置热更新（推荐，<30s 生效）
+   hermes config set skills.formalize.default_version "3.1"
+   
+   # 方案 B：紧急回滚（如配置更新不可用）
+   git revert <grayscale-commit> && git push
+   ```
+3. **验证**：30 秒内确认 100% 流量回到 v3.1 链路
+4. **复盘**：72 小时内提交事故复盘，包含根因 + 修复计划 + 重新灰度时间表
+5. **状态恢复**：确认修复后，从 W1（dogfood）重新开始灰度流程
+
+---
+
+## 八、指标采集方案
+
+### 采集可行性分级
+
+| 指标 | P1/P2 阶段 | P3 阶段 | 采集方式 |
+|------|-----------|--------|---------|
+| `classifier.latency_p99_ms` | ❌ 不可采集 | ✅ orchestrator 钩子 | pre/post API call 时间戳差值 |
+| `classifier.confidence_avg` | ✅ 直接聚合 | ✅ 直接聚合 | classifier JSON 输出 `confidence` 字段 |
+| `classifier.misclassification_rate` | ⚠️ 定性观察 | ✅ 周度抽样 | 每周从日志中随机采样 100 条，人工标注 |
+| `formalize.spec_acceptance_rate` | ⚠️ 定性观察 | ✅ 用户行为代理 | 用户"进入下一步实现"事件作为代理指标 |
+| `handoff.schema_validation_failures` | ❌ 不可采集 | ✅ 调度层校验 | jsonschema.validate() 异常计数 |
+| `orchestrator.fallback_count` | ❌ 不可采集 | ✅ 调度层计数器 | fallback 分支命中次数 |
+
+### P1/P2 阶段降级方案
+
+P1/P2 阶段无 orchestrator 钩子，仅记录 classifier 输出 JSON 中的 `confidence` 与 `primary_intent` 分布。指标 1/5/6 暂不采集，待 P3 代码层钩子上线后补齐。
+
+> ⚠️ **重要**：灰度发布策略（第七章）依赖 P3 阶段的 orchestrator 钩子才能完整执行。P1/P2 期间回退只能通过 git revert，无法秒级切换。
+
 
