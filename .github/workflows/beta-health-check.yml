@@ -1,0 +1,28 @@
+name: Beta Health Check
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at UTC 09:00
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run health check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python ci/beta-health-check.py
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report
+          path: docs/beta-program/health-checks/
+      - name: Alert on red line
+        if: failure()
+        run: echo "RED LINE triggered - check artifact for details"
