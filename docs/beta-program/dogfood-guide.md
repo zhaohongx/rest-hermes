@@ -1,4 +1,4 @@
-# Intent-Classifier + Formalize v4.0 Dogfood 指南
+# Intent-Classifier + formalize v4.0 Dogfood 指南
 
 ## Beta 期信息
 
