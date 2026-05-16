@@ -2263,7 +2263,13 @@ class GatewayRunner:
         source: Optional[SessionSource] = None,
         session_key: Optional[str] = None,
     ) -> dict | None:
-        """Resolve reasoning effort for a session, honoring session overrides."""
+        """Resolve reasoning effort for a session, honoring session overrides.
+
+        WeChat/WeCom platforms default to thinking OFF to avoid HTTP 400
+        errors on DeepSeek's Anthropic endpoint (content[].thinking must
+        round-trip but unsigned blocks are stripped by the adapter).
+        Terminal/CLI sessions keep the global config value.
+        """
         resolved_session_key = session_key
         if not resolved_session_key and source is not None:
             try:
@@ -2274,6 +2280,15 @@ class GatewayRunner:
         overrides = getattr(self, "_session_reasoning_overrides", {}) or {}
         if resolved_session_key and resolved_session_key in overrides:
             return overrides[resolved_session_key]
+
+        # ── Per-platform default: WeChat/WeCom → thinking OFF ──
+        if source is not None and source.platform in (
+            Platform.WEIXIN,
+            Platform.WECOM,
+            Platform.WECOM_CALLBACK,
+        ):
+            return {"enabled": False}
+
         return self._load_reasoning_config()
 
     def _set_session_reasoning_override(

@@ -13135,6 +13135,29 @@ class AIAgent:
                         continue
 
                     status_code = getattr(api_error, "status_code", None)
+
+                    # ── Thinking-mode 400 auto-retry ──────────────────
+                    # DeepSeek's Anthropic endpoint requires thinking blocks
+                    # to round-trip on subsequent turns, but the adapter
+                    # strips unsigned blocks.  HTTP 400 with "thinking must
+                    # be passed back" is the symptom.  Disable thinking and
+                    # retry immediately — the retry with thinking OFF will
+                    # succeed because there are no thinking blocks to echo.
+                    # Refs #16748, #21944.
+                    _err_str = str(api_error)
+                    if (
+                        isinstance(status_code, int)
+                        and 400 <= status_code < 500
+                        and "thinking" in _err_str.lower()
+                        and getattr(self, "reasoning_config", None)
+                    ):
+                        self._vprint(
+                            f"{self.log_prefix}🔄 Thinking mode caused HTTP {status_code} — "
+                            f"disabling thinking and retrying...",
+                            force=True,
+                        )
+                        self.reasoning_config = {"enabled": False}
+                        continue
                     error_context = self._extract_api_error_context(api_error)
 
                     # ── Classify the error for structured recovery decisions ──

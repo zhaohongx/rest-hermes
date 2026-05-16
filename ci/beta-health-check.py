@@ -29,7 +29,7 @@ BETA_START = datetime(2026, 5, 16)
 BETA_EVAL_DATE = datetime(2026, 5, 30)
 BETA_HARD_DEADLINE = datetime(2026, 6, 15)
 
-DOGFOOD_TEAM_SIZE = 7  # Replace with actual team size
+DOGFOOD_TEAM_SIZE = 1  # Replace with actual team size
 
 ROOT = Path(__file__).resolve().parent.parent
 DAILY_DIR = ROOT / "docs" / "beta-program" / "daily"
