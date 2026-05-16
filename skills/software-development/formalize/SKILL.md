@@ -96,7 +96,7 @@ pipelines:
   quick_check:
     description: "轻量预检——仅矛盾检测+复杂度分级"
     steps: [detect_contradiction, classify_complexity]
-    parallel: true
+    parallel: ["detect_contradiction", "classify_complexity"]
     cost: "full_formalize 的 ~15%"
   assumption_audit:
     description: "假设审计——供其他 skill 生成代码前使用"

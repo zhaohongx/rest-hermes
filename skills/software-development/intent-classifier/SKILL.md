@@ -24,9 +24,9 @@ llm_fallback:
   model_tier: lightweight
   max_fallback_ratio: 0.30
 beta:
-  start_date: 2026-05-16
-  evaluation_date: 2026-05-30
-  hard_deadline: 2026-06-15
+  start_date: "2026-05-16"
+  evaluation_date: "2026-05-30"
+  hard_deadline: "2026-06-15"
   promote_criteria:
     - misclassification_rate < 0.08
     - dogfood_satisfaction >= 4.0
