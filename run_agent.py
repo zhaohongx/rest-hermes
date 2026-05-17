@@ -1369,6 +1369,7 @@ class AIAgent:
         # Model response configuration
         self.max_tokens = max_tokens  # None = use model default
         self.reasoning_config = reasoning_config  # None = use default (medium for OpenRouter)
+        self._thinking_stripped = 0  # Counter: thinking-block 400 auto-retry (max 1)
         self.service_tier = service_tier
         self.request_overrides = dict(request_overrides or {})
         self.prefill_messages = prefill_messages or []  # Prefilled conversation turns
@@ -8190,6 +8191,24 @@ class AIAgent:
                                     "   To avoid this delay, set display.streaming: false "
                                     "in config.yaml\n"
                                 )
+
+                            # ── Thinking-block 400: strip + retry once ──
+                            _status = getattr(e, "status_code", None)
+                            if (
+                                isinstance(_status, int)
+                                and 400 <= _status < 500
+                                and "thinking" in _err_lower
+                                and getattr(self, "_thinking_stripped", 0) == 0
+                            ):
+                                self._thinking_stripped = 1
+                                self._vprint(
+                                    f"{self.log_prefix}🔄 HTTP {_status}: thinking-block "
+                                    f"rejection — stripping thinking history and retrying...",
+                                    force=True,
+                                )
+                                self.reasoning_config = {"enabled": False}
+                                continue
+
                             logger.info(
                                 "Streaming failed before delivery: %s",
                                 e,
