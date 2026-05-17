@@ -12431,6 +12431,36 @@ class AIAgent:
                                 error_details.append("response.choices is empty")
 
                     if response_invalid:
+                        # ── Diagnostic dump: save invalid response for debugging ──
+                        try:
+                            import json as _json, pathlib as _pl, time as _time
+                            _dump_path = (
+                                _pl.Path.home() / ".hermes" / "invalid_responses"
+                            )
+                            _dump_path.mkdir(parents=True, exist_ok=True)
+                            _dump_file = (
+                                _dump_path
+                                / f"invalid_{_time.strftime('%Y%m%d_%H%M%S')}.json"
+                            )
+                            _dump_data = {
+                                "error_details": error_details,
+                                "provider": provider_name,
+                                "model": self.model,
+                                "api_mode": self.api_mode,
+                                "base_url": self.base_url,
+                                "api_duration": round(api_duration, 2),
+                                "session": getattr(self, "session_key", "unknown"),
+                            }
+                            _dump_file.write_text(
+                                _json.dumps(_dump_data, indent=2, ensure_ascii=False),
+                                encoding="utf-8",
+                            )
+                            logger.debug(
+                                "Invalid response diagnostic saved: %s", _dump_file
+                            )
+                        except Exception:
+                            pass
+
                         # Stop spinner before printing error messages
                         if thinking_spinner:
                             thinking_spinner.stop("(´;ω;`) oops, retrying...")
