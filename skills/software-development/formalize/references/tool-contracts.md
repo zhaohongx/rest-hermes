@@ -1,8 +1,7 @@
 # formalize v4.0 — 工具契约（Tool Contracts）
 
-> **@status: beta**
+> **@status: active**
 > **定位**：本文档定义 formalize toolkit 所有原子工具的输入/输出 schema，作为 inter-skill 调用的**唯一契约锚点**。
-> **当前状态**：v4.0 toolkit 模式处于 beta 阶段——默认不启用，仅在团队 dogfood 期开启。`full_formalize` 管道（等价 v3.1）已 stable。2 周后根据实际表现决定是否切到 active。
 
 ---
 
