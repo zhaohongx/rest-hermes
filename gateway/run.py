@@ -14891,6 +14891,27 @@ class GatewayRunner:
 
             turn_route = self._resolve_turn_agent_config(message, model, runtime_kwargs)
 
+            # ── L6: WeChat transport hijack ──
+            # DeepSeek's /anthropic endpoint requires thinking blocks to
+            # round-trip, which the adapter cannot satisfy for unsigned
+            # blocks.  WeChat channels MUST use the chat_completions
+            # (OpenAI-compatible) transport regardless of what the
+            # provider resolution chain decides.
+            if source is not None and source.platform in (
+                Platform.WEIXIN,
+                Platform.WECOM,
+                Platform.WECOM_CALLBACK,
+            ):
+                runtime = turn_route.get("runtime", {})
+                if runtime.get("api_mode") == "anthropic_messages":
+                    logger.warning(
+                        "[L6-HIJACK] Overriding api_mode: anthropic_messages "
+                        "-> chat_completions for platform=%s",
+                        source.platform.value,
+                    )
+                    runtime["api_mode"] = "chat_completions"
+                    turn_route["runtime"] = runtime
+
             # Check agent cache — reuse the AIAgent from the previous message
             # in this session to preserve the frozen system prompt and tool
             # schemas for prompt cache hits.

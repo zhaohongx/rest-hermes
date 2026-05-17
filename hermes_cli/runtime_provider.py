@@ -782,6 +782,20 @@ def _resolve_explicit_runtime(
                     "No Anthropic credentials found. Set ANTHROPIC_TOKEN or ANTHROPIC_API_KEY, "
                     "run 'claude setup-token', or authenticate with 'claude /login'."
                 )
+        # TRAP-787: log who triggered this hardcoded anthropic fallback
+        try:
+            import logging as _logging, os as _os
+            _logger = _logging.getLogger(__name__)
+            _logger.error(
+                "[TRAP-787] Returning hardcoded anthropic_messages! "
+                "requested=%r provider=%r HERMES_INFERENCE_PROVIDER=%r",
+                requested_provider, provider,
+                _os.getenv("HERMES_INFERENCE_PROVIDER"),
+            )
+            import traceback as _tb
+            _logger.error("[TRAP-787] Stack:\n" + "".join(_tb.format_stack()[-6:]))
+        except Exception:
+            pass
         return {
             "provider": "anthropic",
             "api_mode": "anthropic_messages",

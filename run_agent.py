@@ -1217,12 +1217,22 @@ class AIAgent:
             self.api_mode = "codex_responses"
             self.provider = "xai"
         elif self.provider == "anthropic" or (provider_name is None and self._base_url_hostname == "api.anthropic.com"):
+            logger.warning(
+                "[TRAP-1220] api_mode→anthropic_messages | "
+                "provider=%r base_url=%r hostname=%r",
+                self.provider, self.base_url, self._base_url_hostname,
+            )
             self.api_mode = "anthropic_messages"
             self.provider = "anthropic"
         elif self._base_url_lower.rstrip("/").endswith("/anthropic"):
             # Third-party Anthropic-compatible endpoints (e.g. MiniMax, DashScope)
             # use a URL convention ending in /anthropic. Auto-detect these so the
             # Anthropic Messages API adapter is used instead of chat completions.
+            logger.warning(
+                "[TRAP-1226] api_mode→anthropic_messages | "
+                "base_url=%r",
+                self._base_url_lower,
+            )
             self.api_mode = "anthropic_messages"
         elif self.provider == "bedrock" or (
             self._base_url_hostname.startswith("bedrock-runtime.")
