@@ -141,6 +141,19 @@ metadata:
 6. LLM 1-shot 兜底（仅对未命中输入）
 ```
 
+### 3.1 Group D 默认路由：两阶段工作流（v1.1 新增）
+
+Group D 意图（D1-D4）**默认走两阶段模式**——先生成规格书给用户审查，确认后再执行：
+
+```
+阶段 1：formalize_only → 生成规格书 → 展示给用户
+阶段 2：用户确认（"开始""执行""继续"）→ 下游 skill 执行
+```
+
+**例外**：当用户在同一条消息中同时描述了"需求 + 执行指令"（如"设计一个登录系统并帮我写代码"），可走 `invoke_skill_with_formalize`。
+
+**理由**：`#beta` 路径下，分类器不应代替用户决定"审查后再执行"还是"直接执行"。保守默认（先审查）避免错误执行。
+
 ---
 
 ## 4. S4：输出契约（强制 JSON）
@@ -176,7 +189,8 @@ metadata:
 | `primary_intent` | enum | 17 类之一，置信度最高 |
 | `secondary_intents` | enum[] | 次要标签（多分类） |
 | `confidence` | float | <0.6 时调用方应启用兜底策略 |
-| `route.action` | enum | `direct_respond` / `execute_tool` / `invoke_skill` / `invoke_skill_with_formalize` |
+| `route.action` | enum | `direct_respond` / `execute_tool` / `invoke_skill` / `formalize_only` / `invoke_skill_with_formalize` |
+| `route.formalize_only` | bool | D 组默认 `true`——先生成规格书给用户审查，确认后再执行 |
 | `route.target_skill` | string | 目标技能名（C/D 组必填） |
 | `route.needs_formalize` | bool | D 组为 true |
 | `route.formalize_mode` | enum | `full_formalize` / `quick_check` / `assumption_audit` |
