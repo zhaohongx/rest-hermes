@@ -2062,3 +2062,51 @@ def build_anthropic_kwargs(
     return kwargs
 
 
+# ── Thinking-block stripping utilities ──────────────────────────────────
+
+
+def strip_thinking_from_history(messages: list) -> list:
+    """Remove all thinking content blocks from message history.
+
+    Used as fallback when DeepSeek's Anthropic endpoint returns
+    HTTP 400 "thinking must be passed back" — stripping the thinking
+    blocks from history and retrying without thinking resolves the
+    rejection.
+
+    Returns a shallow copy of the list; each message with content
+    blocks is deep-copied.
+    """
+    import copy
+
+    cleaned = []
+    for msg in messages:
+        new_msg = copy.deepcopy(msg)
+        content = new_msg.get("content")
+        if isinstance(content, list):
+            new_content = [
+                b
+                for b in content
+                if isinstance(b, dict) and b.get("type") != "thinking"
+            ]
+            if not new_content:
+                new_content = [{"type": "text", "text": "[reasoning omitted]"}]
+            new_msg["content"] = new_content
+        cleaned.append(new_msg)
+    return cleaned
+
+
+def has_thinking_blocks(messages: list) -> bool:
+    """Check whether any message in the list contains thinking blocks.
+
+    Useful for diagnostics and to decide whether a strip+retry
+    is necessary.
+    """
+    for msg in messages:
+        content = msg.get("content")
+        if isinstance(content, list):
+            for b in content:
+                if isinstance(b, dict) and b.get("type") == "thinking":
+                    return True
+    return False
+
+

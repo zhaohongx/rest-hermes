@@ -7492,6 +7492,10 @@ class AIAgent:
         - anthropic_messages: client.messages.stream() via Anthropic SDK
         - codex_responses: delegates to _run_codex_stream (already streaming)
 
+        # Per-call log rate limiter: same error key at most 1x per 5s window
+        _stream_error_recent: dict[str, float] = {}
+        import time as _time  # noqa: F811
+
         Fires stream_delta_callback and _stream_callback for each text token.
         Tool-call turns suppress the callback — only text-only final responses
         stream to the consumer.  Returns a SimpleNamespace that mimics the
@@ -8209,10 +8213,25 @@ class AIAgent:
                                 self.reasoning_config = {"enabled": False}
                                 continue
 
-                            logger.info(
-                                "Streaming failed before delivery: %s",
-                                e,
+                            # ── Log rate-limit: same error key at most 1x/5s ──
+                            _err_key = (
+                                f"{type(e).__name__}:"
+                                f"{getattr(e, 'status_code', '')}"
                             )
+                            _now = time.monotonic()
+                            if _err_key not in _stream_error_recent:
+                                _stream_error_recent[_err_key] = 0.0
+                            if _now - _stream_error_recent[_err_key] >= 5.0:
+                                _stream_error_recent[_err_key] = _now
+                                logger.info(
+                                    "Streaming failed before delivery: %s",
+                                    e,
+                                )
+                            else:
+                                logger.debug(
+                                    "Streaming failed (suppressed duplicate): %s",
+                                    _err_key,
+                                )
 
                         # Propagate the error to the main retry loop instead of
                         # falling back to non-streaming inline.  The main loop has
