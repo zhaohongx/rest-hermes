@@ -356,6 +356,7 @@ cost_warning: >
 
 side_effects: >
   可能加载 references/templates/{L1,L2,L3,stem}.md + references/stem-eng-sub-template.md + references/failure-patterns.md
+  L3 规格书自动落盘到 ~/.hermes/specs/<timestamp>_<title>.md（用于人类审查）
 stateless: false
 
 calling_example: |
