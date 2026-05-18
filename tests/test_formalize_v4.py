@@ -119,7 +119,7 @@ for md in BASE.rglob("*.md"):
     text = md.read_text(encoding="utf-8", errors="ignore")
     if "@status: beta" in text[:500]:
         preview_files.append(str(md.relative_to(BASE)))
-check(len(preview_files) == 2, f"2 beta-tagged files (actual: {len(preview_files)})")
+check(len(preview_files) == 0, f"0 beta-tagged files — all promoted to active (actual: {len(preview_files)})")
 
 print(f"  -> References: {len(refs)} in SKILL.md, 0 dead")
 
@@ -336,6 +336,50 @@ fp_text = fp.read_text(encoding="utf-8")
 check("变更日志" in fp_text or "changelog" in fp_text.lower(), "failure-patterns has changelog")
 
 print(f"  -> Self-consistency: all structural checks")
+
+# ============================================================
+# 8. V4.1 NEW FEATURES
+# ============================================================
+print("\n" + "=" * 60)
+print("8. v4.1 New Features")
+print("=" * 60)
+
+# 8a. 8-layer complexity reference
+cdr = BASE / "references" / "complexity-depth-reference.md"
+check(cdr.exists(), "complexity-depth-reference.md exists")
+if cdr.exists():
+    cdr_text = cdr.read_text(encoding="utf-8")
+    check("8 层横向递进" in cdr_text or "layer" in cdr_text.lower(), "8-layer table present")
+    check("闭环" in cdr_text, "closed-loop principle present")
+    check("进化链" in cdr_text, "evolution chains present")
+
+# 8b. L3+ in SKILL.md
+check("L3+" in body, "L3+ grade in complexity table")
+check("complexity-depth-reference.md" in body, "L3+ reference linked")
+
+# 8c. Approval gate in skeleton-card
+check("审批门控" in sk_text, "approval gate in skeleton-card")
+check("人工审批" in sk_text or "HUMAN INTERVENTION" in sk_text.upper(), "human approval trigger")
+check("确认" in sk_text and "修改" in sk_text, "approval signals present")
+
+# 8d. Wolfram integration in SKILL.md
+check("Wolfram Alpha" in body, "Wolfram Alpha in S3 STEM section")
+check("mcp_wolfram" in body.lower(), "MCP wolfram tool reference")
+
+# 8e. Summary-push for L3 specs
+check("审批摘要" in sk_text or "500" in sk_text, "summary-push for L3 spec review")
+check("本地文件" in sk_text, "local file save for review")
+
+# 8f. Pipeline data contract
+tc = (BASE / "references" / "tool-contracts.md").read_text(encoding="utf-8")
+check("管道数据契约" in tc, "pipeline data contract in tool-contracts")
+check("结构化 JSON" in tc, "structured JSON requirement")
+check("自然语言" in tc, "natural language violation flag")
+
+# 8g. Rewrite failure handling
+check("重写失败" in sk_text or "降置信" in sk_text, "rewrite failure handling")
+
+print(f"  -> v4.1 features: all checked")
 
 # ============================================================
 # SUMMARY
