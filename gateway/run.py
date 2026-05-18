@@ -2292,7 +2292,7 @@ class GatewayRunner:
             return None
         scores = {}
         msg_lower = message.lower()
-        for profile, keywords in GatewayService._PROFILE_ROUTES.items():
+        for profile, keywords in GatewayRunner._PROFILE_ROUTES.items():
             score = 0
             for kw in keywords:
                 if kw.lower() in msg_lower:
