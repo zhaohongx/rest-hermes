@@ -2257,6 +2257,54 @@ class GatewayRunner:
                 value_tokens.append(token)
         return " ".join(value_tokens).strip().lower(), persist_global
 
+    # ── Profile auto-router ────────────────────────────────────────────
+    _PROFILE_ROUTES = {
+        "architect": [
+            "设计", "架构", "系统", "方案", "微服务", "分布式",
+            "模块划分", "技术选型", "数据流", "高可用", "扩展性",
+            "design", "architecture", "system design",
+        ],
+        "coder": [
+            "代码", "修复", "bug", "报错", "调试", "实现", "函数",
+            "接口", "API", "数据库", "查询", "优化性能",
+            "code", "fix", "debug", "implement", "refactor",
+        ],
+        "analyst": [
+            "分析", "数据", "报表", "统计", "ROI", "市场",
+            "竞品", "用户行为", "趋势", "预测", "指标",
+            "analysis", "data", "metrics", "report",
+        ],
+        "writer": [
+            "写", "创作", "文案", "翻译", "润色", "改写",
+            "文章", "博客", "文档", "教程", "宣传",
+            "write", "content", "blog", "article",
+        ],
+        "reviewer": [
+            "审查", "review", "检查", "审计", "安全",
+            "规范", "代码质量", "最佳实践",
+        ],
+    }
+
+    @staticmethod
+    def _auto_detect_profile(message: str) -> str | None:
+        """Match user message against profile keywords, return best profile."""
+        if not message:
+            return None
+        scores = {}
+        msg_lower = message.lower()
+        for profile, keywords in GatewayService._PROFILE_ROUTES.items():
+            score = 0
+            for kw in keywords:
+                if kw.lower() in msg_lower:
+                    score += 1
+            if score > 0:
+                scores[profile] = score
+        if not scores:
+            return None
+        return max(scores, key=scores.get)
+
+    # ── Reasoning config resolver ─────────────────────────────────────
+
     def _resolve_session_reasoning_config(
         self,
         *,
@@ -14911,6 +14959,25 @@ class GatewayRunner:
                     )
                     runtime["api_mode"] = "chat_completions"
                     turn_route["runtime"] = runtime
+
+            # ── Profile auto-detect: match best role for this message ──
+            _detected = self._auto_detect_profile(message)
+            if _detected:
+                _soul_path = (
+                    _hermes_home / "profiles" / _detected / "SOUL.md"
+                )
+                if _soul_path.exists():
+                    _soul_text = _soul_path.read_text(encoding="utf-8").strip()
+                    # Prepend as invisible role prefix so downstream
+                    # skills still see their expected message format
+                    message = (
+                        f"[ROLE: {_detected}] {_soul_text}\n\n"
+                        f"--- user message ---\n{message}"
+                    )
+                    logger.debug(
+                        "Auto-detected profile=%s for message preview=%.60s",
+                        _detected, message[:60],
+                    )
 
             # Check agent cache — reuse the AIAgent from the previous message
             # in this session to preserve the frozen system prompt and tool
