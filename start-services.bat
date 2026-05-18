@@ -14,15 +14,19 @@ if exist "%USERPROFILE%\.hermes\gateway.lock" del /f "%USERPROFILE%\.hermes\gate
 echo [2/2] 启动网关...
 start "Hermes-Gateway" cmd /c "python -m gateway.run 2>&1"
 
-echo [3/3] 等待网关就绪...
-timeout /t 10 /nobreak >nul
+echo [3/5] 启动 ComfyUI (生图引擎, 端口 8188)...
+start "ComfyUI" cmd /c "cd /d %USERPROFILE%\Documents\comfy\ComfyUI && python main.py 2>&1"
 
-echo [4/4] 启动健康检查守护...
+echo [4/5] 等待网关就绪...
+timeout /t 15 /nobreak >nul
+
+echo [5/5] 启动健康检查守护...
 start "Hermes-Watchdog" cmd /c "python ci\health-watchdog.py 2>&1"
 
 echo.
 echo ============================================
 echo   网关: Hermes-Gateway 窗口
+echo   生图: ComfyUI 窗口 (首次启动需下载模型)
 echo   监控: Hermes-Watchdog 窗口
 echo   关闭任一窗口即停止对应服务
 echo ============================================
