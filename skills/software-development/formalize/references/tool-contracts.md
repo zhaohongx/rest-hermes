@@ -517,6 +517,30 @@ T4 (extract_assumptions) → T7 (validate_spec, strictness=relaxed)
 
 ---
 
+## 管道数据契约（Anti Context-Fragmentation）
+
+管道模式下，工具间数据传递**必须使用结构化 JSON**，禁止自然语言中转：
+
+```
+T3 输出 → T6 输入:
+  matched_patterns:  [{"id": "P6", "name": "登录认证类", "mandatory_requirements": [...]}]
+  ── 必须传递完整数组，不可简化为 "命中了登录模式"
+
+T5 输出 → T6 输入:
+  dimensions:  {object: {status: "✓", note: "..."}, structure: {...}, ...}
+  weak_dimensions: ["可能性", "尺度"]
+  ── 必须传递 10 维度完整 dict，不可简化为 "大部分维度 OK"
+
+T4 输出 → T6 输入:
+  implicit:  [{"text": "假设数据库支持事务", "should_warn": true, "reason": "..."}]
+  unstated_but_critical: ["数据量级", "停机窗口"]
+  ── 必须逐条传递，不可合并为 "有几个假设"
+```
+
+**违规判定**：若下游工具收到的输入是自然语言摘要而非结构化数据，`validate_spec` 应判为 **high severity** 违规。
+
+---
+
 ## 调用方兼容性承诺
 
 | 版本 | 工具签名兼容 | 输出格式兼容 |
