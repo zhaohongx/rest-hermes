@@ -37,6 +37,7 @@ reference_loading_policy:
   on_template_L2: references/templates/L2.md
   on_template_L3: references/templates/L3.md
   on_template_stem: references/templates/stem.md
+  on_complexity_l3plus: references/complexity-depth-reference.md
 output_mode: hybrid
 exposed_tools:
   - name: detect_contradiction
@@ -322,6 +323,7 @@ S0 → S1 → S2 → S3 → S4 → S5 → S6 → S7 → S8
 | **L1 微型** | 单对象、单输入输出、无规则分支 | mini 模板 | 300-600 字 |
 | **L2 标准** | 2-5 个对象，含规则，无系统级 | 标准模板 | 800-1800 字 |
 | **L3 扩展** | >5 对象 / 系统级 / STEM L2 / 多模块 | 扩展模板 | 1500-3500 字 |
+| **L3+** | 第 6-8 层（弯曲/奇点/多场耦合/统一） | 扩展 + complexity-depth-reference.md | 2000-5000 字 |
 
 ### 分级判定算法
 
