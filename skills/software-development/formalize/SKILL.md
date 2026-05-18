@@ -366,7 +366,10 @@ L1: 用 Wolfram Alpha 验证核心公式的数学正确性
 L2: 用 Wolfram Alpha 做符号计算/方程求解，结果写入 B1-STEM 段
 ```
 
-**MCP 工具路径**：`mcp_wolfram_*`（由网关自动发现，无需手动调用）
+**MCP 工具路径**：
+- 通用查询：`mcp_wolfram_full_query` 或 `mcp_wolfram_ask_pipeworx`
+- 数学专项：优先用通用查询工具（`integrate` 等专项工具可能返回未结构化错误）
+- 将 Wolfram 返回的权威结果写入 B1-STEM 段，标注 `[来源: Wolfram Alpha]`
 
 ### 4.3 失败模式知识库（v3 新增 / v3.1 外部化）
 
